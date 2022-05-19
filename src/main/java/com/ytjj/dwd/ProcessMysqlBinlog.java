@@ -36,7 +36,6 @@ public class ProcessMysqlBinlog {
     public static void main(String[] args) {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setParallelism(1);
-
         env.setStateBackend(new FsStateBackend("hdfs://dataserver001:8020/gmall/dwd_log/ck"));
         env.enableCheckpointing(10000L, CheckpointingMode.EXACTLY_ONCE);
         env.getCheckpointConfig().setCheckpointTimeout(60000L);
@@ -123,7 +122,7 @@ public class ProcessMysqlBinlog {
         //维度数据写入hbase
         hbase.addSink(new DimSink());
 
-        //
+
         // new FlinkKafkaProducer<>()
 
     }
