@@ -26,7 +26,7 @@ import org.apache.kafka.connect.data.Struct;
 import org.apache.kafka.connect.source.SourceRecord;
 
 /**
- * 1.读取配置表，表中配置了mysql的表，业务数据发到kafka中，维度数据发送到Hbase中，将此配置表封装并广播出去
+ * 1.读取配置表，表中配置了业务数据库中mysql的表，发送到kafka或者hbase，
  * 2.将配置表配置与mysqlBinlog数据流connect
  * 3.根据配置来分发数据，业务数据分发到kafka中，维度数据通过phoenix存储到hbase中去
  */
