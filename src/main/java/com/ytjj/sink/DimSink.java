@@ -3,6 +3,7 @@ package com.ytjj.sink;
 
 import com.alibaba.fastjson.JSONObject;
 import com.ytjj.common.GmallConfig;
+import com.ytjj.util.DimUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.functions.sink.RichSinkFunction;
@@ -15,7 +16,7 @@ import java.util.Collection;
 import java.util.Set;
 
 public class DimSink extends RichSinkFunction<JSONObject> {
-    private Connection connection=null;
+    private Connection connection = null;
 
     @Override
     public void open(Configuration parameters) throws Exception {
@@ -26,7 +27,7 @@ public class DimSink extends RichSinkFunction<JSONObject> {
 
     @Override
     public void invoke(JSONObject value, Context context) throws Exception {
-        PreparedStatement preparedStatement=null;
+        PreparedStatement preparedStatement = null;
 
         try {
             JSONObject data = value.getJSONObject("data");
@@ -41,12 +42,17 @@ public class DimSink extends RichSinkFunction<JSONObject> {
             preparedStatement = connection.prepareStatement(upsertSql);
             preparedStatement.executeUpdate();
             // TODO  如果是更新数据，那么还要去redis缓存中删除这条数据
-
+            if ("update".equals(value.getString("type"))) {
+                String sourceTable = value.getString("table");
+                String s = value.getJSONObject("data").getString("id");
+                String key = sourceTable + ":" + s;
+                DimUtil.deleteCached(key);
+            }
         } catch (SQLException e) {
             e.printStackTrace();
             System.out.println("插入phoenix维度数据失败");
-        }finally {
-            if(preparedStatement!=null){
+        } finally {
+            if (preparedStatement != null) {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
@@ -59,7 +65,7 @@ public class DimSink extends RichSinkFunction<JSONObject> {
     }
 
     private String genUpsertSql(String tableName, Set<String> keys, Collection<Object> values) {
-        return "upsert into "+ GmallConfig.HBASE_SCHEMA+"."+tableName+"("+StringUtils.join(keys,",")
-                +")"+"values('"+StringUtils.join(values,"','")+"')";
+        return "upsert into " + GmallConfig.HBASE_SCHEMA + "." + tableName + "(" + StringUtils.join(keys, ",")
+                + ")" + "values('" + StringUtils.join(values, "','") + "')";
     }
 }
