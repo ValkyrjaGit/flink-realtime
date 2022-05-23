@@ -60,8 +60,6 @@ public class DimSink extends RichSinkFunction<JSONObject> {
                 }
             }
         }
-
-
     }
 
     private String genUpsertSql(String tableName, Set<String> keys, Collection<Object> values) {

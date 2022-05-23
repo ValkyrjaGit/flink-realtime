@@ -7,8 +7,11 @@ import redis.clients.jedis.Jedis;
 
 import java.util.List;
 
+/**
+ * 根据查询条件，使用phoenix去hbase中查询维表的数据
+ */
 public class DimUtil {
-    public static JSONObject getDimInfo(String tableName, Tuple2<String, String>... columnValues) {
+    private static JSONObject getDimInfo(String tableName, Tuple2<String, String>... columnValues) {
         if (columnValues.length <= 0) {
             throw new RuntimeException("请至少设置一个条件！");
         }
@@ -53,13 +56,16 @@ public class DimUtil {
         return dimJsonObj;
     }
 
+    /**
+     * 默认条件是查询id
+     */
     public static JSONObject getDimInfo(String tableName, String value) {
         return getDimInfo(tableName, new Tuple2<>("id", value));
     }
 
     /**
      * 如果维度表中的数据发生了改变，那么就要让对应的redis中的缓存失效
-     * */
+     */
     public static void deleteCached(String key) {
         Jedis jedis = RedisUtil.getJedis();
         jedis.del(key);

@@ -11,6 +11,9 @@ import org.apache.flink.streaming.api.functions.async.RichAsyncFunction;
 import java.util.Collections;
 import java.util.concurrent.ThreadPoolExecutor;
 
+/**
+ * 主流是通过数据库的异步客户端来实现，没有的话就通过多线程来模拟，但是会比正规的异步客户端性能稍差
+ */
 public abstract class DimAsyncFunction<T> extends RichAsyncFunction<T, T> implements DimJoinFunction<T> {
     //声明一个线程池对象
     private ThreadPoolExecutor threadPoolExecutor;
@@ -33,6 +36,7 @@ public abstract class DimAsyncFunction<T> extends RichAsyncFunction<T, T> implem
         threadPoolExecutor.submit(new Runnable() {
             @Override
             public void run() {
+                //先获取维表的key，根据维表的key查询出维表数据，传给join函数进行关联
                 String key = getKey(input);
                 JSONObject dimInfo = DimUtil.getDimInfo(tableName, key);
                 if (dimInfo != null && dimInfo.size() > 0) {

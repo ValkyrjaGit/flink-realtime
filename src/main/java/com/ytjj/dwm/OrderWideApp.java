@@ -1,12 +1,15 @@
 package com.ytjj.dwm;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.ytjj.bean.OrderDetail;
 import com.ytjj.bean.OrderInfo;
 import com.ytjj.bean.OrderWide;
+import com.ytjj.function.DimAsyncFunction;
 import com.ytjj.util.MyKafkaUtil;
 import org.apache.flink.api.common.eventtime.SerializableTimestampAssigner;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
+import org.apache.flink.streaming.api.datastream.AsyncDataStream;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.datastream.KeyedStream;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
@@ -18,6 +21,7 @@ import org.apache.flink.util.Collector;
 
 import java.text.SimpleDateFormat;
 import java.time.Duration;
+import java.util.concurrent.TimeUnit;
 
 public class OrderWideApp {
     public static void main(String[] args) throws Exception {
@@ -84,6 +88,43 @@ public class OrderWideApp {
                         out.collect(new OrderWide(left, right));
                     }
                 });
+
+
+        SingleOutputStreamOperator<OrderWide> orderWideWithUserDS = AsyncDataStream.unorderedWait(orderWideDS, new DimAsyncFunction<OrderWide>("DIM_USER_INFO") {
+            @Override
+            public String getKey(OrderWide orderWide) {
+                return orderWide.getUser_id().toString();
+            }
+
+            @Override
+            public void join(OrderWide orderWide, JSONObject dimInfo) throws Exception {
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+                String birthday = dimInfo.getString("BIRTHDAY");
+                long currentTS = System.currentTimeMillis();
+                Long ts = sdf.parse(birthday).getTime();
+                //将生日字段处理成年纪
+                Long ageLong = (currentTS - ts) / 1000L / 60 / 60 / 24 / 365;
+                orderWide.setUser_age(ageLong.intValue());
+                String gender = dimInfo.getString("GENDER");
+                orderWide.setUser_gender(gender);
+            }
+        }, 60, TimeUnit.SECONDS);
+
+        AsyncDataStream.unorderedWait(orderWideWithUserDS, new DimAsyncFunction<OrderWide>("DIM_BASE_PROVINCE") {
+            @Override
+            public String getKey(OrderWide input) {
+                return input.getProvince_id().toString();
+            }
+
+            @Override
+            public void join(OrderWide orderWide, JSONObject dimInfo) throws Exception {
+                orderWide.setProvince_name(dimInfo.getString("NAME"));
+                orderWide.setProvince_area_code(dimInfo.getString("AREA_CODE"));
+
+
+            }
+        }, 60, TimeUnit.SECONDS);
+
 
         env.execute();
     }
