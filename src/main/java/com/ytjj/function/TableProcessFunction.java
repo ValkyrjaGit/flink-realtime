@@ -26,7 +26,6 @@ import java.util.Map;
 public class TableProcessFunction extends BroadcastProcessFunction<JSONObject, String, JSONObject> {
 
     private Connection connection;
-
     private MapStateDescriptor<String, TableProcess> mapStateDescriptor;
     private OutputTag<JSONObject> objectOutputTag;
 

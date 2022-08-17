@@ -9,6 +9,7 @@ public class ThreadPoolUtil {
 
     public ThreadPoolUtil() {
     }
+
     /**
      * 获取单例的线程池对象
      * corePoolSize:指定了线程池中的线程数量，它的数量决定了添加的任务是开辟新的线程去执行，还是放到 workQueue 任务队列中去；
