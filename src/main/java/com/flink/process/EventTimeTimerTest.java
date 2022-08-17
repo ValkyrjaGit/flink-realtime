@@ -1,7 +1,6 @@
 package com.flink.process;
 
 import com.flink.beans.Event;
-import com.flink.datastream.ClickSource;
 import org.apache.flink.api.common.eventtime.SerializableTimestampAssigner;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
